@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { mockCenters, type CenterItem } from '../utils/mockData';
 import { Search, MapPin, Navigation, Clock, Phone, Compass } from 'lucide-react';
 
@@ -7,6 +7,117 @@ export const Centers: React.FC = () => {
   const [selectedCenter, setSelectedCenter] = useState<CenterItem | null>(mockCenters[0]);
   const [isLocating, setIsLocating] = useState(false);
   const [directionsMessage, setDirectionsMessage] = useState<string | null>(null);
+
+  // Google Maps refs
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+
+  // Poll for window.google to load asynchronously
+  useEffect(() => {
+    let checkInterval: any;
+    let attempts = 0;
+
+    const checkGoogleMaps = () => {
+      // @ts-ignore
+      if (window.google && window.google.maps) {
+        setGoogleMapsLoaded(true);
+        clearInterval(checkInterval);
+      } else {
+        attempts++;
+        if (attempts > 15) {
+          clearInterval(checkInterval);
+        }
+      }
+    };
+
+    checkGoogleMaps(); // Check immediately
+    checkInterval = setInterval(checkGoogleMaps, 500);
+
+    return () => clearInterval(checkInterval);
+  }, []);
+
+  // Initialize Map
+  useEffect(() => {
+    if (!googleMapsLoaded || !mapContainerRef.current) return;
+
+    // Clear previous markers
+    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current = [];
+
+    // @ts-ignore
+    const google = window.google;
+    
+    // Default center at Gorakhpur coordinates
+    const initialCenter = selectedCenter 
+      ? { lat: selectedCenter.lat, lng: selectedCenter.lng }
+      : { lat: 26.7588, lng: 83.3931 };
+
+    const map = new google.maps.Map(mapContainerRef.current, {
+      center: initialCenter,
+      zoom: 14,
+      mapTypeControl: false,
+      streetViewControl: false,
+      styles: [
+        {
+          featureType: "administrative.land_parcel",
+          elementType: "labels",
+          stylers: [{ visibility: "off" }]
+        }
+      ]
+    });
+
+    mapInstanceRef.current = map;
+
+    // Create markers for all centers in our list
+    mockCenters.forEach(center => {
+      const marker = new google.maps.Marker({
+        position: { lat: center.lat, lng: center.lng },
+        map: map,
+        title: center.name,
+        animation: google.maps.Animation.DROP
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="font-family: sans-serif; padding: 4px; color: #0b132b;">
+            <p style="font-weight: bold; font-size: 13px; margin: 0;">${center.name}</p>
+            <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">${center.address}</p>
+            <p style="font-size: 10px; color: #0d9488; font-weight: bold; margin: 4px 0 0 0;">Open: ${center.hours}</p>
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        setSelectedCenter(center);
+        infoWindow.open(map, marker);
+      });
+
+      markersRef.current.push(marker);
+    });
+
+  }, [googleMapsLoaded]);
+
+  // Pan to selected center when it changes
+  useEffect(() => {
+    if (mapInstanceRef.current && selectedCenter && googleMapsLoaded) {
+      // @ts-ignore
+      const google = window.google;
+      mapInstanceRef.current.panTo({ lat: selectedCenter.lat, lng: selectedCenter.lng });
+      mapInstanceRef.current.setZoom(15);
+
+      // Bounce the corresponding marker
+      const idx = mockCenters.findIndex(c => c.id === selectedCenter.id);
+      if (idx !== -1 && markersRef.current[idx]) {
+        const marker = markersRef.current[idx];
+        marker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(() => {
+          marker.setAnimation(null);
+        }, 1500);
+      }
+    }
+  }, [selectedCenter, googleMapsLoaded]);
 
   // Filter centers based on query
   const filteredCenters = mockCenters.filter(c => {
@@ -20,7 +131,6 @@ export const Centers: React.FC = () => {
     setSearchVal('');
     setTimeout(() => {
       setIsLocating(false);
-      // Default to Gorakhpur center Shakti Medical Store for demo purposes
       setSelectedCenter(mockCenters[0]);
       setSearchVal('Gorakhpur');
     }, 800);
@@ -113,37 +223,23 @@ export const Centers: React.FC = () => {
 
           </div>
 
-          {/* Right panel: Map & Details view */}
+          {/* Right panel: Google Map Canvas */}
           <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-6">
             
-            {/* Map Visualizer Placeholder */}
-            <div className="w-full h-64 bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden relative flex items-center justify-center">
-              {/* Map background grids and circles */}
-              <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-              <div className="absolute w-48 h-48 rounded-full border-2 border-brand-teal/15 animate-ping pointer-events-none" />
-              <div className="absolute w-24 h-24 rounded-full border border-brand-teal/30 pointer-events-none" />
-
-              {/* Patient Pin */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
-                <div className="w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                  <span className="text-[9px] font-bold">Me</span>
-                </div>
-              </div>
-
-              {/* Selected Center Pin */}
-              {selectedCenter && (
-                <div className="absolute top-[35%] left-[62%] -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
-                  <div className="bg-brand-teal text-white p-2 rounded-full shadow-lg border-2 border-white animate-bounce flex items-center justify-center">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <div className="bg-slate-900/90 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow mt-1 whitespace-nowrap">
-                    {selectedCenter.name.split(' — ')[1] || selectedCenter.name}
-                  </div>
+            {/* Live Map Canvas */}
+            <div className="w-full h-96 rounded-2xl border border-slate-200 overflow-hidden relative bg-slate-100">
+              {googleMapsLoaded ? (
+                <div ref={mapContainerRef} className="w-full h-full" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center space-y-2 p-6 text-center text-slate-400">
+                  <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-semibold">Loading Google Maps Radar...</p>
+                  <p className="text-[10px] text-slate-500">Falls back to static maps if offline.</p>
                 </div>
               )}
-
-              <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur text-white text-[9px] font-bold px-2.5 py-1 rounded border border-slate-700 uppercase tracking-wide">
-                Simulated Locator Radar
+              
+              <div className="absolute bottom-4 left-4 bg-slate-900/85 backdrop-blur text-white text-[9px] font-bold px-2.5 py-1 rounded border border-slate-700 uppercase tracking-wide pointer-events-none z-10">
+                Google Maps Developer Mode
               </div>
             </div>
 

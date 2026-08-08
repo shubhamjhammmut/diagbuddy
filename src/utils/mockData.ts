@@ -29,6 +29,8 @@ export interface CenterItem {
   hours: string;
   businessType: string;
   phone: string;
+  lat: number;
+  lng: number;
 }
 
 export interface RouteItem {
@@ -164,7 +166,9 @@ export const mockCenters: CenterItem[] = [
     distanceKm: 1.2,
     hours: '8:00 AM - 8:00 PM',
     businessType: 'Pharmacy',
-    phone: '+91 98765 43210'
+    phone: '+91 98765 43210',
+    lat: 26.7588,
+    lng: 83.3931
   },
   {
     id: 'c2',
@@ -175,7 +179,9 @@ export const mockCenters: CenterItem[] = [
     distanceKm: 2.5,
     hours: '9:00 AM - 7:30 PM',
     businessType: 'Clinic',
-    phone: '+91 87654 32109'
+    phone: '+91 87654 32109',
+    lat: 23.3664,
+    lng: 85.3344
   },
   {
     id: 'c3',
@@ -186,7 +192,9 @@ export const mockCenters: CenterItem[] = [
     distanceKm: 0.8,
     hours: '8:00 AM - 9:00 PM',
     businessType: 'Pharmacy',
-    phone: '+91 76543 21098'
+    phone: '+91 76543 21098',
+    lat: 23.7957,
+    lng: 86.4304
   },
   {
     id: 'c4',
@@ -197,7 +205,9 @@ export const mockCenters: CenterItem[] = [
     distanceKm: 3.1,
     hours: '9:00 AM - 8:00 PM',
     businessType: 'Clinic',
-    phone: '+91 99887 76655'
+    phone: '+91 99887 76655',
+    lat: 23.6693,
+    lng: 86.1511
   },
   {
     id: 'c5',
@@ -208,7 +218,9 @@ export const mockCenters: CenterItem[] = [
     distanceKm: 1.5,
     hours: '8:00 AM - 8:30 PM',
     businessType: 'Diagnostic Center',
-    phone: '+91 98888 77777'
+    phone: '+91 98888 77777',
+    lat: 25.2799,
+    lng: 82.9995
   },
   {
     id: 'c6',
@@ -219,7 +231,9 @@ export const mockCenters: CenterItem[] = [
     distanceKm: 4.2,
     hours: '8:00 AM - 9:00 PM',
     businessType: 'Pharmacy',
-    phone: '+91 91234 56789'
+    phone: '+91 91234 56789',
+    lat: 25.5996,
+    lng: 85.1522
   }
 ];
 
