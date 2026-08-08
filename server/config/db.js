@@ -14,10 +14,7 @@ const connectDB = async () => {
     const connUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/diagbuddy';
     console.log(`Connecting to MongoDB at URI: ${connUri}...`);
     
-    // Set a quick timeout (3 seconds) for local connection checks so it fails fast if not running
-    const conn = await mongoose.connect(connUri, {
-      serverSelectionTimeoutMS: 3000
-    });
+    const conn = await mongoose.connect(connUri);
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     isMockDb = false;
