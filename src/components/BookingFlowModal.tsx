@@ -32,13 +32,13 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({ test, isOpen
   const collectionFee = collectionType === 'Home' ? 50 : 0;
   const totalPrice = test.price + collectionFee;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 4) {
       setStep(prev => prev + 1);
     } else {
       // Submit booking
       const selectedCenter = mockCenters.find(c => c.id === selectedCenterId);
-      const sampleId = addBooking({
+      const sampleId = await addBooking({
         patientName,
         age,
         gender,

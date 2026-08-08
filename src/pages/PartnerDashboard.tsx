@@ -20,12 +20,12 @@ export const PartnerDashboard: React.FC = () => {
   const completedSamples = bookings.filter(b => b.status === 'Report Ready').length + 13;
   const totalEarnings = completedSamples * 150 + pendingPickup * 100; // mock earnings logic
 
-  const handleRegisterWalkIn = (e: React.FormEvent) => {
+  const handleRegisterWalkIn = async (e: React.FormEvent) => {
     e.preventDefault();
     const test = mockTests.find(t => t.id === selectedTestId);
     if (!test) return;
 
-    const sampleId = addBooking({
+    const sampleId = await addBooking({
       patientName,
       age: parseInt(age) || 30,
       gender,
@@ -46,8 +46,8 @@ export const PartnerDashboard: React.FC = () => {
     setTimeout(() => setSuccessMsg(null), 5000);
   };
 
-  const handleRequestPickup = () => {
-    triggerMockLogisticsPickup();
+  const handleRequestPickup = async () => {
+    await triggerMockLogisticsPickup();
     alert('Logistics pickup request dispatched to central hub. Courier routing optimized.');
   };
 

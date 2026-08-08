@@ -20,9 +20,9 @@ export const LogisticsDashboard: React.FC = () => {
     Distance: r.distanceKm
   }));
 
-  const handleSimulateStep = () => {
+  const handleSimulateStep = async () => {
     setBtnLoading(true);
-    triggerMockLogisticsPickup();
+    await triggerMockLogisticsPickup();
     
     const randomRoute = routes[Math.floor(Math.random() * routes.length)];
     const log = `[${new Date().toLocaleTimeString()}] Optimized pickup on ${randomRoute.routeName.split(' — ')[0]}. Temperature logged: ${randomRoute.temperatureC}°C. Status: ${randomRoute.status}`;
