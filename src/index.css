@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-navy: #0b132b;
+  --color-brand-blue: #1c2541;
+  --color-brand-darkBlue: #1e3a8a;
+  --color-brand-primary: #2563eb;
+  --color-brand-teal: #0d9488;
+  --color-brand-green: #10b981;
+  --color-brand-lightBlue: #f0f9ff;
+  --color-brand-lightTeal: #f0fdfa;
+  --color-brand-lightGreen: #f0fdf4;
+  --color-brand-gray: #f8fafc;
+  --color-brand-textDark: #1e293b;
+  --color-brand-textLight: #64748b;
+  --font-sans: 'Inter', 'Poppins', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-gray text-brand-textDark font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom transitions and scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Pulse animation for active logistics route */
+@keyframes routePulse {
+  0%, 100% {
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 4px;
+  }
+}
+
+.animate-route-pulse {
+  animation: routePulse 2s infinite ease-in-out;
+}
+
+/* Dot indicator running on logistics route */
+@keyframes routeDot {
+  0% {
+    stroke-dashoffset: 40;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-route-dot {
+  stroke-dasharray: 8, 8;
+  animation: routeDot 4s linear infinite;
+}
