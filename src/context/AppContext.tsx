@@ -87,22 +87,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadData = async () => {
     try {
       const bookingsRes = await fetch('/api/bookings');
-      if (bookingsRes.ok) {
-        const bookingsData = await bookingsRes.ok ? await bookingsRes.json() : [];
-        setBookings(bookingsData);
-      }
+      if (!bookingsRes.ok) throw new Error('Failed to fetch bookings');
+      const bookingsData = await bookingsRes.json();
+      setBookings(bookingsData);
 
       const routesRes = await fetch('/api/routes');
-      if (routesRes.ok) {
-        const routesData = await routesRes.json();
-        setRoutes(routesData);
-      }
+      if (!routesRes.ok) throw new Error('Failed to fetch routes');
+      const routesData = await routesRes.json();
+      setRoutes(routesData);
 
       const partnersRes = await fetch('/api/partners');
-      if (partnersRes.ok) {
-        const partnersData = await partnersRes.json();
-        setPartnerRequests(partnersData);
-      }
+      if (!partnersRes.ok) throw new Error('Failed to fetch partners');
+      const partnersData = await partnersRes.json();
+      setPartnerRequests(partnersData);
     } catch (err) {
       console.warn('API Server not responding. Gracefully falling back to local preloaded state.');
       const fallbackBooking: Booking = {
