@@ -12,18 +12,7 @@
 - [x] Create walkthrough summary artifact
 - [x] Build Express Backend with MongoDB
 - [x] Connect Frontend with Backend
-
-- [ ] Build Gemini AI Integration
-  - [ ] Add `GEMINI_API_KEY` placeholder variable to `server/.env`
-  - [ ] Implement symptom checker API route (`/api/ai/recommend`)
-  - [ ] Implement lab report translation API route (`/api/ai/explain`)
-- [ ] Build Auth Demo Login Portal
-  - [ ] Create `LoginModal.tsx` containing Patient, Partner, and Logistics roles
-  - [ ] Wire login states and active tab routing in `AppContext.tsx` and `Navbar.tsx`
-- [ ] Integrate AI on Frontend
-  - [ ] Add AI Test Assistant input and results in `Tests.tsx`
-  - [ ] Add AI Report Assistant explainer pop-up in `UserDashboard.tsx`
-- [ ] Verify, Build, and Push
-  - [ ] Run full project compilation check
-  - [ ] Push updates to remote GitHub repository
-  - [ ] Update walkthrough details
+- [x] Build Gemini AI Integration
+- [x] Build Auth Demo Login Portal
+- [x] Integrate AI on Frontend
+- [x] Verify, Build, and Push
