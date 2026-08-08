@@ -15,12 +15,5 @@
 - [x] Build Gemini AI Integration
 - [x] Build Auth Demo Login Portal
 - [x] Integrate AI on Frontend
-
-- [ ] Integrate Google Maps (Developer Mode)
-  - [ ] Add Google Maps API script tag to `index.html`
-  - [ ] Update `mockData.ts` to add `lat` and `lng` coordinates to the CenterItem interface and items
-  - [ ] Rewrite `Centers.tsx` to load Google Maps with custom markers and info windows
-- [ ] Verify, Build, and Push
-  - [ ] Check build compilation for frontend typescript
-  - [ ] Push updates to remote GitHub repository
-  - [ ] Update walkthrough details
+- [x] Integrate Google Maps (Developer Mode)
+- [x] Verify, Build, and Push
