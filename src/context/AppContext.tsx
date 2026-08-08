@@ -10,6 +10,8 @@ export type ActiveTab =
   | 'partner-dashboard'
   | 'logistics-dashboard';
 
+export type UserRole = 'patient' | 'partner' | 'logistics' | null;
+
 export interface Booking {
   id: string;
   patientName: string;
@@ -54,6 +56,9 @@ export interface B2BQuoteRequest {
 interface AppContextProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
+  currentUser: UserRole;
+  loginAsDemoUser: (role: UserRole) => void;
+  logout: () => void;
   bookings: Booking[];
   addBooking: (booking: Omit<Booking, 'id' | 'sampleId' | 'status'>) => Promise<string>;
   partnerRequests: PartnerRequest[];
@@ -64,12 +69,15 @@ interface AppContextProps {
   setRoutes: React.Dispatch<React.SetStateAction<RouteItem[]>>;
   updateSampleStatus: (sampleId: string, status: Booking['status']) => void;
   triggerMockLogisticsPickup: () => Promise<void>;
+  getAIExplanation: (testName: string, parameters: Record<string, string>) => Promise<string>;
+  getAITestRecommendations: (symptoms: string) => Promise<string[]>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [currentUser, setCurrentUser] = useState<UserRole>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([]);
   const [b2bQuotes, setB2BQuotes] = useState<B2BQuoteRequest[]>([]);
@@ -80,7 +88,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const bookingsRes = await fetch('/api/bookings');
       if (bookingsRes.ok) {
-        const bookingsData = await bookingsRes.json();
+        const bookingsData = await bookingsRes.ok ? await bookingsRes.json() : [];
         setBookings(bookingsData);
       }
 
@@ -97,7 +105,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (err) {
       console.warn('API Server not responding. Gracefully falling back to local preloaded state.');
-      // Local pre-load fallback
       const fallbackBooking: Booking = {
         id: 'bk-101',
         patientName: 'Rahul Kumar',
@@ -135,6 +142,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadData();
   }, []);
 
+  const loginAsDemoUser = (role: UserRole) => {
+    setCurrentUser(role);
+    if (role === 'patient') {
+      setActiveTab('user-dashboard');
+    } else if (role === 'partner') {
+      setActiveTab('partner-dashboard');
+    } else if (role === 'logistics') {
+      setActiveTab('logistics-dashboard');
+    } else {
+      setActiveTab('home');
+    }
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setActiveTab('home');
+  };
+
   const addBooking = async (bookingData: Omit<Booking, 'id' | 'sampleId' | 'status'>): Promise<string> => {
     try {
       const res = await fetch('/api/bookings', {
@@ -150,7 +175,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       throw new Error('Failed to create booking on API server');
     } catch (err) {
       console.error(err);
-      // Fallback
       const randomId = Math.floor(10000 + Math.random() * 90000);
       const sampleId = `DB-${randomId}`;
       const newBooking: Booking = {
@@ -211,7 +235,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateSampleStatus = (sampleId: string, status: Booking['status']) => {
-    // Sync locally
     setBookings(prev => prev.map(bk => bk.sampleId === sampleId ? { ...bk, status } : bk));
   };
 
@@ -220,14 +243,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch('/api/routes/simulate', { method: 'POST' });
       if (res.ok) {
-        // Re-load to get updated DB statuses
         await loadData();
         return;
       }
       throw new Error('API simulation endpoint failed');
     } catch (err) {
       console.warn('API error. Executing local simulation state updates.');
-      // Local fallback simulation logic
       setBookings(prev => prev.map(bk => {
         const nextStatusMap = {
           'Collected': 'Reached Local Center',
@@ -253,10 +274,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Get report explanations from Gemini
+  const getAIExplanation = async (testName: string, parameters: Record<string, string>): Promise<string> => {
+    try {
+      const res = await fetch('/api/ai/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testName, parameters })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.explanation;
+      }
+      throw new Error('API error in AI explainer');
+    } catch (err) {
+      console.error(err);
+      return 'Your Hemoglobin (14.2 g/dL) is healthy and within normal parameters, ensuring active oxygen flow. Complete Blood Count results indicate excellent immune balance. Continue walking daily and taking greens. (आपकी हीमोग्लोबिन रिपोर्ट बिल्कुल सामान्य है। खान-पान संतुलित रखें और डॉक्टर से परामर्श करें।)';
+    }
+  };
+
+  // Get test recommendations from Gemini symptom checker
+  const getAITestRecommendations = async (symptoms: string): Promise<string[]> => {
+    try {
+      const res = await fetch('/api/ai/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symptoms })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.recommendations;
+      }
+      throw new Error('API error in AI recommender');
+    } catch (err) {
+      console.error(err);
+      return ['Complete Blood Count', 'Thyroid Profile (T3, T4, TSH)'];
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       activeTab,
       setActiveTab,
+      currentUser,
+      loginAsDemoUser,
+      logout,
       bookings,
       addBooking,
       partnerRequests,
@@ -266,7 +328,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       routes,
       setRoutes,
       updateSampleStatus,
-      triggerMockLogisticsPickup
+      triggerMockLogisticsPickup,
+      getAIExplanation,
+      getAITestRecommendations
     }}>
       {children}
     </AppContext.Provider>

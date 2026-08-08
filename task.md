@@ -10,17 +10,20 @@
 - [x] Build Interactive Dashboards
 - [x] Final Wiring and Validation
 - [x] Create walkthrough summary artifact
-
 - [x] Build Express Backend with MongoDB
-  - [x] Initialize `server/` folder and install dependencies (`express`, `mongoose`, `cors`, `dotenv`)
-  - [x] Create database connection handler in `server/config/db.js` with in-memory fallback
-  - [x] Define Mongoose schemas for `Booking`, `Partner`, and `Quote`
-  - [x] Create REST routes in `server/routes/api.js`
-  - [x] Write server entrypoint `server/server.js` with auto-seeding logic
 - [x] Connect Frontend with Backend
-  - [x] Modify `vite.config.ts` to add server proxy forwarding for `/api`
-  - [x] Update `src/context/AppContext.tsx` with async fetch and post handlers
-- [x] Verify and Push
-  - [x] Verify both servers compile and work together
-  - [x] Push all modifications to the GitHub remote repository
-  - [x] Update walkthrough details
+
+- [ ] Build Gemini AI Integration
+  - [ ] Add `GEMINI_API_KEY` placeholder variable to `server/.env`
+  - [ ] Implement symptom checker API route (`/api/ai/recommend`)
+  - [ ] Implement lab report translation API route (`/api/ai/explain`)
+- [ ] Build Auth Demo Login Portal
+  - [ ] Create `LoginModal.tsx` containing Patient, Partner, and Logistics roles
+  - [ ] Wire login states and active tab routing in `AppContext.tsx` and `Navbar.tsx`
+- [ ] Integrate AI on Frontend
+  - [ ] Add AI Test Assistant input and results in `Tests.tsx`
+  - [ ] Add AI Report Assistant explainer pop-up in `UserDashboard.tsx`
+- [ ] Verify, Build, and Push
+  - [ ] Run full project compilation check
+  - [ ] Push updates to remote GitHub repository
+  - [ ] Update walkthrough details

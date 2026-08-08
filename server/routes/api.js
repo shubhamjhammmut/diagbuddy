@@ -6,13 +6,14 @@ import Quote from '../models/Quote.js';
 
 const router = express.Router();
 
-// Static seed data matching our mock frontend configurations
+// Static seed data
 const testsData = [
   { id: 't1', name: 'Complete Blood Count', code: 'CBC', price: 299, category: 'Blood Tests', homeAvailable: true, tatHours: 24, description: 'Measures RBC, WBC, platelets, and hemoglobin.', components: ['Hemoglobin', 'RBC Count', 'WBC Count', 'Platelet Count'] },
   { id: 't2', name: 'Diabetes Screening (HbA1c & Fasting Sugar)', code: 'DIABETES', price: 349, category: 'Diabetes', homeAvailable: true, tatHours: 12, description: 'Checks average blood sugar levels.', components: ['HbA1c', 'Fasting Blood Sugar'] },
   { id: 't3', name: 'Thyroid Profile (T3, T4, TSH)', code: 'THYROID', price: 399, category: 'Thyroid', homeAvailable: true, tatHours: 24, description: 'Evaluates thyroid gland function.', components: ['T3', 'T4', 'TSH'] },
   { id: 't4', name: 'Liver Function Test', code: 'LFT', price: 499, category: 'Liver', homeAvailable: true, tatHours: 24, description: 'Measures enzymes, proteins, and bilirubin.', components: ['SGOT', 'SGPT', 'Bilirubin'] },
-  { id: 't5', name: 'Kidney Function Test', code: 'KFT', price: 449, category: 'Kidney', homeAvailable: true, tatHours: 24, description: 'Assesses kidney filtration rates.', components: ['Creatinine', 'Urea', 'Uric Acid'] }
+  { id: 't5', name: 'Kidney Function Test', code: 'KFT', price: 449, category: 'Kidney', homeAvailable: true, tatHours: 24, description: 'Assesses kidney filtration rates.', components: ['Creatinine', 'Urea', 'Uric Acid'] },
+  { id: 't6', name: 'Vitamin D & B12 Test Combo', code: 'VITAMINS', price: 799, category: 'Vitamins', homeAvailable: true, tatHours: 36, description: 'Measures bone health and nerve vitals.', components: ['Vitamin D', 'Vitamin B12'] }
 ];
 
 const packagesData = [
@@ -37,13 +38,10 @@ let routesData = [
 router.get('/tests', (req, res) => res.json(testsData));
 router.get('/packages', (req, res) => res.json(packagesData));
 router.get('/centers', (req, res) => res.json(centersData));
-
-// Get active routes
 router.get('/routes', (req, res) => res.json(routesData));
 
 // Simulate logistics step
 router.post('/routes/simulate', async (req, res) => {
-  // Update local routesData counts & temp
   routesData = routesData.map(r => {
     if (r.id === 'rt1') {
       return { 
@@ -55,7 +53,6 @@ router.post('/routes/simulate', async (req, res) => {
     return r;
   });
 
-  // Advance status of all active bookings in DB or Mock
   if (isMockDb) {
     mockDb.bookings = mockDb.bookings.map(bk => {
       const nextStatusMap = {
@@ -184,6 +181,153 @@ router.post('/quotes', async (req, res) => {
     res.status(201).json(newQuote);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// GEMINI AI INTEGRATION ROUTES
+// ==========================================
+
+// 1. AI Test Recommender
+router.post('/ai/recommend', async (req, res) => {
+  const { symptoms } = req.body;
+  if (!symptoms) {
+    return res.status(400).json({ error: 'Symptoms description is required.' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  // Local fallback parser in case API key is missing or call fails
+  const localRecommendFallback = (desc) => {
+    const lower = desc.toLowerCase();
+    const suggestions = [];
+
+    if (lower.includes('tired') || lower.includes('fatigue') || lower.includes('weak') || lower.includes('energy')) {
+      suggestions.push('Complete Blood Count');
+      suggestions.push('Thyroid Profile (T3, T4, TSH)');
+    }
+    if (lower.includes('sugar') || lower.includes('diabet') || lower.includes('urine') || lower.includes('thirsty')) {
+      suggestions.push('Diabetes Screening (HbA1c & Fasting Sugar)');
+    }
+    if (lower.includes('weight loss') || lower.includes('weight gain') || lower.includes('cold') || lower.includes('hair')) {
+      suggestions.push('Thyroid Profile (T3, T4, TSH)');
+    }
+    if (lower.includes('joint') || lower.includes('bone') || lower.includes('muscle') || lower.includes('body pain')) {
+      suggestions.push('Vitamin D & B12 Test Combo');
+    }
+    if (lower.includes('alcohol') || lower.includes('liver') || lower.includes('digest') || lower.includes('jaundice')) {
+      suggestions.push('Liver Function Test');
+    }
+    if (lower.includes('kidney') || lower.includes('back pain') || lower.includes('swelling')) {
+      suggestions.push('Kidney Function Test');
+    }
+
+    // Default suggestions if no match
+    if (suggestions.length === 0) {
+      suggestions.push('Complete Blood Count');
+      suggestions.push('Diabetes Screening (HbA1c & Fasting Sugar)');
+    }
+
+    return [...new Set(suggestions)];
+  };
+
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+    console.log('Gemini API Key missing. Returning local symptom diagnostics recommendations.');
+    return res.json({ recommendations: localRecommendFallback(symptoms), source: 'local-analytics' });
+  }
+
+  try {
+    const prompt = `You are DiagBuddy AI, an assistant helping patients in rural India choose the right blood tests.
+The patient describes these symptoms: "${symptoms}".
+Suggest which of the following tests from our catalog are most relevant:
+- Complete Blood Count
+- Diabetes Screening (HbA1c & Fasting Sugar)
+- Thyroid Profile (T3, T4, TSH)
+- Liver Function Test
+- Kidney Function Test
+- Vitamin D & B12 Test Combo
+
+Respond ONLY with a valid JSON array of strings containing the exact matching test names from the list above. No other conversational text.
+Example response: ["Complete Blood Count", "Thyroid Profile (T3, T4, TSH)"]`;
+
+    const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      })
+    });
+
+    if (!apiResponse.ok) {
+      throw new Error(`Gemini API returned status ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const recommendations = JSON.parse(rawText.trim());
+
+    res.json({ recommendations, source: 'gemini-ai' });
+  } catch (err) {
+    console.warn('Gemini request failed. Falling back to local analytics.', err.message);
+    res.json({ recommendations: localRecommendFallback(symptoms), source: 'local-fallback' });
+  }
+});
+
+// 2. AI Pathology Report Explainer
+router.post('/ai/explain', async (req, res) => {
+  const { testName, parameters } = req.body;
+  if (!testName) {
+    return res.status(400).json({ error: 'Test name and parameters are required.' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  // Local fallback explanation generator
+  const localExplainFallback = (name, params) => {
+    let summary = '';
+    if (name.includes('CBC') || name.includes('Blood')) {
+      const hb = params['Hemoglobin'] || '14.2';
+      summary = `Your Hemoglobin level is ${hb} g/dL, which indicates a healthy blood oxygen level. Your White Blood Cell (WBC) count is within normal parameters, suggesting a strong immune system. Continue a balanced diet rich in leafy greens. (आपके हीमोग्लोबिन और श्वेत रक्त कोशिकाएं बिल्कुल सामान्य स्तर पर हैं, जो कि स्वस्थ शरीर का संकेत है।)`;
+    } else {
+      summary = `Your diagnostic parameters for ${name} appear within standard bounds. We advise maintaining regular health habits and walking daily. (आपकी जांच रिपोर्ट सामान्य है। अपने दैनिक खान-पान का ध्यान रखें।)`;
+    }
+    return summary + ' Please note: This explanation is for educational purposes. Always consult a certified healthcare practitioner for official clinical advice.';
+  };
+
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+    console.log('Gemini API Key missing. Returning local diagnostic explanation.');
+    return res.json({ explanation: localExplainFallback(testName, parameters), source: 'local-analytics' });
+  }
+
+  try {
+    const prompt = `You are DiagBuddy AI, an empathetic doctor explaining lab report values to a patient from a small town in India.
+The test taken is: "${testName}".
+The parameters are: ${JSON.stringify(parameters)}.
+Explain what these values mean in simple, encouraging terms.
+Use basic English and include a line of translation or helper advice in Hindi (using Devanagari script).
+Keep the whole explanation under 90 words.
+Conclude with a clear reminder that this is for educational purposes and they must consult a doctor.`;
+
+    const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    if (!apiResponse.ok) {
+      throw new Error(`Gemini API returned status ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json();
+    const explanation = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    res.json({ explanation: explanation.trim(), source: 'gemini-ai' });
+  } catch (err) {
+    console.warn('Gemini report translation failed. Falling back to local analytics.', err.message);
+    res.json({ explanation: localExplainFallback(testName, parameters), source: 'local-fallback' });
   }
 });
 
