@@ -11,16 +11,16 @@
 - [x] Final Wiring and Validation
 - [x] Create walkthrough summary artifact
 
-- [ ] Build Express Backend with MongoDB
-  - [ ] Initialize `server/` folder and install dependencies (`express`, `mongoose`, `cors`, `dotenv`)
-  - [ ] Create database connection handler in `server/config/db.js` with in-memory fallback
-  - [ ] Define Mongoose schemas for `Booking`, `Partner`, and `Quote`
-  - [ ] Create REST routes in `server/routes/api.js`
-  - [ ] Write server entrypoint `server/server.js` with auto-seeding logic
-- [ ] Connect Frontend with Backend
-  - [ ] Modify `vite.config.ts` to add server proxy forwarding for `/api`
-  - [ ] Update `src/context/AppContext.tsx` with async fetch and post handlers
-- [ ] Verify and Push
-  - [ ] Verify both servers compile and work together
-  - [ ] Push all modifications to the GitHub remote repository
-  - [ ] Update walkthrough details
+- [x] Build Express Backend with MongoDB
+  - [x] Initialize `server/` folder and install dependencies (`express`, `mongoose`, `cors`, `dotenv`)
+  - [x] Create database connection handler in `server/config/db.js` with in-memory fallback
+  - [x] Define Mongoose schemas for `Booking`, `Partner`, and `Quote`
+  - [x] Create REST routes in `server/routes/api.js`
+  - [x] Write server entrypoint `server/server.js` with auto-seeding logic
+- [x] Connect Frontend with Backend
+  - [x] Modify `vite.config.ts` to add server proxy forwarding for `/api`
+  - [x] Update `src/context/AppContext.tsx` with async fetch and post handlers
+- [x] Verify and Push
+  - [x] Verify both servers compile and work together
+  - [x] Push all modifications to the GitHub remote repository
+  - [x] Update walkthrough details
